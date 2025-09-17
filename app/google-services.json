@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "410892694539",
+    "project_id": "fir-101a",
+    "storage_bucket": "fir-101a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:410892694539:android:06f12f482fe3596dd8430e",
+        "android_client_info": {
+          "package_name": "ofir.vander.firebase101"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtDJgoGuRPjBHj6PwUICzUX5h_gJhy_G0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
