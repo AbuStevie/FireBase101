@@ -18,9 +18,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.Query;
 
-import java.util.ArrayList; // Import ArrayList
-import java.util.List;     // Import List (good practice to use the interface)
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Collections;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -33,7 +36,9 @@ public class MainActivity extends AppCompatActivity {
 
     // Using ArrayList to store the Question objects
     private List<Question> questionList; // Declare the list
+    private List<Question> tempQuestionsHolder; // A temporary list to hold questions while fetching
     private boolean initialLoadDone = false; // Flag to ensure initial load happens only once
+    // private int levelsSuccessfullyFetched = 0; // Counter for successfully fetched levels
 
     // UI elements
     ChipGroup cgAnswers;
@@ -44,7 +49,8 @@ public class MainActivity extends AppCompatActivity {
 
     // Game Logic Variables
     int correctAnswer=0, selectedAnswer=0;
-    int currentQuestionIndex = 0, questionsInGame = 3;
+    int currentQuestionIndex = 0, questionsInGame = 5;
+    String currentCategory = "SolarSystem";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,14 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize your list
         questionList = new ArrayList<>();
+        tempQuestionsHolder = new ArrayList<>();
 
         // fetch questions and populate list
-        fetchQuestionsFromDB();
-
-        // loadNextQuestion();
-        // cannot load next question until list is populated
-        // i moved the initial load to the fetchQuestionsFromDB method
-        // best implement a fragment with a loading screen
+        fetchQuestionsPerLevel();
 
         bSubmit.setOnClickListener(v -> {
             // see that any chip is checked
@@ -96,46 +98,65 @@ public class MainActivity extends AppCompatActivity {
 
     private int chipIdToInt(int chipId) {
         if (chipId == R.id.cAns1)
-            return 1;
+            return 0;
         else if (chipId == R.id.cAns2)
-            return 2;
+            return 1;
         else if (chipId == R.id.cAns3)
-            return 3;
+            return 2;
         else if (chipId == R.id.cAns4)
-            return 4;
-        return 0;
+            return 3;
+        else
+            return -1;
     }
 
     private void loadNextQuestion(){
 
         if(questionList.isEmpty()){
             Log.e(TAG, "loadNextQuestion called but questionList is empty.");
-            // Potentially show a "game over" or "no questions" state
-            Toast.makeText(this, "No more questions or questions not loaded.", Toast.LENGTH_LONG).show();
-            // You might want to disable UI elements here
+            //  "no questions" state
+            tvQuestion.setText("OOPS.. No Questions found!");
+            bSubmit.setEnabled(false);
+            for(int i=0; i < cgAnswers.getChildCount(); i++)
+                cgAnswers.getChildAt(i).setEnabled(false);
             return;
         }
 
         // check what question is now
-        if (currentQuestionIndex < questionsInGame && currentQuestionIndex < questionList.size()) {
+        if (currentQuestionIndex < questionsInGame ) {
             // unchecks all chips
             cgAnswers.clearCheck();
+            bSubmit.setEnabled(true);
 
             // retrieve next question
             Question currentQuestion = questionList.get(currentQuestionIndex);
             // here scramble answers function
-            correctAnswer = 4;
+            List<String> answers = scrambleAnswers(currentQuestion);
             // set question text and answers
             tvQuestion.setText(currentQuestion.getQueText());
-            cAns4.setText(currentQuestion.getAnsCorrect());
-            cAns1.setText(currentQuestion.getAnsWrong1());
-            cAns2.setText(currentQuestion.getAnsWrong2());
-            cAns3.setText(currentQuestion.getAnsWrong3());
+            cAns1.setText(answers.get(0));
+            cAns2.setText(answers.get(1));
+            cAns3.setText(answers.get(2));
+            cAns4.setText(answers.get(3));
 
         }
         else
             // here confetti animation
             Toast.makeText(this, "Game Over!", Toast.LENGTH_LONG).show();
+    }
+
+    private List<String> scrambleAnswers(Question question) {
+        Random random = new Random();
+        correctAnswer= random.nextInt(4);
+
+        List<String> answers = new ArrayList<>();
+        String correct = question.getAnsCorrect();
+        answers.add(question.getAnsWrong1());
+        answers.add(question.getAnsWrong2());
+        answers.add(question.getAnsWrong3());
+
+        Collections.shuffle(answers);
+        answers.add(correctAnswer, correct);
+        return answers;
     }
 
     private void initUI(){
@@ -146,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
         cAns4 = findViewById(R.id.cAns4);
         tvQuestion = findViewById(R.id.tvQuestion);
         bSubmit = findViewById(R.id.bSubmit);
+        bSubmit.setEnabled(false);
         ivCorrect = findViewById(R.id.ivCorrect);
         ivWrong = findViewById(R.id.ivWrong);
     }
@@ -157,83 +179,148 @@ public class MainActivity extends AppCompatActivity {
 
         // Get a reference to your "Questions" node in Firebase
         // IMPORTANT: Make sure "Questions" exactly matches the key you used in Firebase.
-        questionsRef = database.getReference("Questions");
+        questionsRef = database.getReference("Questions/SolarSystem");
     }
 
-    private void fetchQuestionsFromDB() {
-        // Add a ValueEventListener to the "Questions" reference
-        questionsRef.addValueEventListener(new ValueEventListener() {
+    private void fetchQuestionsPerLevel() {
+        Log.d(TAG, "Attempting to fetch 1 random question per level for " + questionsInGame + " levels from category: " + currentCategory);
+
+        // 1. For recurring games - Reset state variables from any previous game/fetch
+        if (questionList == null) { // Ensure questionList is initialized if not already
+            questionList = new ArrayList<>();
+        }
+        questionList.clear(); // Clear the main list that holds questions for the current game
+
+        if (tempQuestionsHolder == null) { // Ensure temp list is initialized
+            tempQuestionsHolder = new ArrayList<>();
+        }
+        tempQuestionsHolder.clear(); // Clear the temporary list used during fetching
+
+        //levelsSuccessfullyFetched = 0; // Reset the counter for successfully fetched levels
+        initialLoadDone = false;       // Reset the flag indicating if the initial load attempt is complete
+        // This is important if you allow re-fetching or new games.
+
+        // 2. (Optional) Update UI to show loading state
+        // Example:
+        tvQuestion.setText("Loading questions...");
+        bSubmit.setEnabled(false);
+        // You might want a ProgressBar to be visible here.
+
+        // 3. Initiate the recursive fetching process starting with level 1
+        if (database == null) {
+            Log.e(TAG, "FirebaseDatabase instance is null. Cannot fetch questions. Ensure initFirebase() is called.");
+            Toast.makeText(this, "Error initializing database. Cannot load questions.", Toast.LENGTH_LONG).show();
+            // Potentially update UI to reflect this critical error
+            initialLoadDone = true; // Mark attempt as done, even if failed critically
+            checkAndStart(); // Call process to handle the error state gracefully
+            return;
+        }
+
+        Log.i(TAG, "Starting chain: Calling fetchRandomQuestionForLevel(1)");
+        fetchRandomQuestionForLevel(1); // Kick off the chain for Level 1
+    }
+
+    private void fetchRandomQuestionForLevel(final int levelToFetch) {
+        // 1. Base Case: If we've attempted to fetch beyond the number of desired levels
+        if (levelToFetch > questionsInGame) {
+            Log.d(TAG, "Base case reached: All " + questionsInGame + " levels have been attempted. Processing results...");
+            checkAndStart(); // All levels attempted, now process whatever we gathered
+            return; // Stop recursion
+        }
+
+        Log.i(TAG, "Attempting to fetch a random question for Level " + levelToFetch + " in category '" + currentCategory + "'");
+
+        // 2. Construct the DatabaseReference and Query for the current level
+        DatabaseReference categoryRef = database.getReference("Questions").child(currentCategory);
+        // Firebase queries for numerical equality often expect a Double, even if data is Integer
+        Query levelSpecificQuery = categoryRef.orderByChild("level").equalTo((double) levelToFetch);
+
+        // 3. Attach a one-time listener to this specific query
+        levelSpecificQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-
-                questionList.clear(); // Clear the list before adding new data to avoid duplicates on updates
-
-                Log.d(TAG, "DataSnapshot exists: " + dataSnapshot.exists());
-                Log.d(TAG, "Number of questions found: " + dataSnapshot.getChildrenCount());
-
-                // Iterate through each child snapshot (each question object)
-                for (DataSnapshot questionSnapshot : dataSnapshot.getChildren()) {
-                    // Attempt to convert the snapshot into a Question object
-                    Question question = questionSnapshot.getValue(Question.class);
-
-                    if (question != null) {
-                        questionList.add(question); // Add the parsed Question object to your list
-                        Log.d(TAG, "Fetched Question: ID = " + question.getId() + ", Text = " + question.getQueText());
-                    } else {
-                        Log.w(TAG, "Question data is null for key: " + questionSnapshot.getKey());
-                        // This can happen if the structure in Firebase doesn't match your Question.java class
-                        // or if a specific node is malformed.
+                List<Question> questionsFoundAtThisLevel = new ArrayList<>();
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot questionSnapshot : dataSnapshot.getChildren()) {
+                        Question question = questionSnapshot.getValue(Question.class);
+                        if (question != null) {
+                            questionsFoundAtThisLevel.add(question);
+                        } else {
+                            Log.w(TAG, "Null question object encountered for key: " + questionSnapshot.getKey() + " while fetching level " + levelToFetch);
+                        }
                     }
+                } // else: dataSnapshot does not exist, meaning no questions matched the query for this level
+
+                if (!questionsFoundAtThisLevel.isEmpty()) {
+                    // 4. Randomly select one question from the fetched list for this level
+                    Random random = new Random();
+                    int randomIndex = random.nextInt(questionsFoundAtThisLevel.size());
+                    Question selectedQuestion = questionsFoundAtThisLevel.get(randomIndex);
+
+                    tempQuestionsHolder.add(selectedQuestion); // Add the chosen question to our temporary list
+                    //levelsSuccessfullyFetched++; // Increment counter for successfully fetched levels
+                    Log.d(TAG, "Level " + levelToFetch + ": Successfully selected '" + selectedQuestion.getQueText() + "' from " + questionsFoundAtThisLevel.size() + " available questions.");
+                } else {
+                    Log.w(TAG, "Level " + levelToFetch + ": No questions found or all were null in category '" + currentCategory + "'. This level will be skipped.");
+                    // Note: If no question is found for a level, tempQuestionsHolder will not get an entry for it.
+                    // processFetchedQuestions() will need to handle cases where not all NUM_LEVELS questions were found.
                 }
 
-                // Now your 'questionList' ArrayList is populated with Question objects
-                // You can use it to update your UI, display in a RecyclerView, etc.
-                Log.d(TAG, "Total questions in list: " + questionList.size());
-
-                // Example: If you wanted to verify the contents
-                /*for (Question q : questionList) {
-                    Log.i(TAG, "Question in list: " + q.toString());
-
-                }*/
-
-                // until we implement a loading screen fragment, or a dedicated loading activity - initial loading is here
-                if (!questionList.isEmpty() && !initialLoadDone) {
-                    loadNextQuestion(); // Load the first question
-                    initialLoadDone = true; // Set flag so it doesn't reload on subsequent data changes
-                } else if (questionList.isEmpty()) {
-                    // Handle the case where no questions were loaded
-                    Log.e(TAG, "No questions loaded from Firebase.");
-                    Toast.makeText(MainActivity.this, "OOPS.. problem fetching Questions..", Toast.LENGTH_LONG).show();
-
-                }
-
-                // IMPORTANT: If you only want to fetch the data ONCE and not listen for continuous updates,
-                // you might prefer using questionsRef.addListenerForSingleValueEvent(...) instead of addValueEventListener.
-                // For now, addValueEventListener is fine to see it working.
+                // 5. Recursive Call: Proceed to fetch for the next level
+                Log.d(TAG, "Level " + levelToFetch + " processing complete. Proceeding to fetch Level " + (levelToFetch + 1));
+                fetchRandomQuestionForLevel(levelToFetch + 1);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Getting Post failed, log a message
-               Log.w(TAG, "loadQuestions:onCancelled", databaseError.toException());
-                // Handle the error, e.g., show a message to the user
+                Log.e(TAG, "Database error fetching Level " + levelToFetch + " in category '" + currentCategory + "': " + databaseError.getMessage());
+                // Even if one level fails, we still try to proceed to the next to fetch what we can.
+                // processFetchedQuestions() will handle the outcome if not all levels were successful.
+                Log.d(TAG, "Level " + levelToFetch + " fetch cancelled. Proceeding to fetch Level " + (levelToFetch + 1));
+                fetchRandomQuestionForLevel(levelToFetch + 1);
             }
         });
     }
 
-    // Optional: If you used addValueEventListener, remember to remove it when the activity is destroyed
-    // to prevent memory leaks, though for a simple main activity it might not be strictly necessary
-    // if the app closes. For fragments or long-lived listeners, it's crucial.
-    /*
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // if (questionsRef != null && yourValueEventListener != null) {
-        //     questionsRef.removeEventListener(yourValueEventListener);
-        // }
+    private void checkAndStart() {
+        Log.d(TAG, "Processing fetched questions. Temporary holder size: " + tempQuestionsHolder.size() +
+                ", Expected levels: " + questionsInGame);
+
+        questionList.clear(); // Ensure the main list is empty before populating
+
+        // Check if we successfully got one question for each desired level
+        if (tempQuestionsHolder.size() == questionsInGame) {
+            questionList.addAll(tempQuestionsHolder);
+            Log.i(TAG, "Successfully fetched " + questionList.size() + " questions for the game.");
+            // Optional: Shuffle the questionList if you don't want them in level order
+            // Collections.shuffle(questionList); // Make sure to import java.util.Collections
+        } else {
+            // Not enough questions were collected
+            Log.e(TAG, "Failed to fetch a complete set of questions. Expected " + questionsInGame +
+                    ", but got " + tempQuestionsHolder.size() + ".");
+            tvQuestion.setText("Failed to load questions. Please check connection and try again.");
+            bSubmit.setEnabled(false);
+            for(int i=0; i < cgAnswers.getChildCount(); i++)
+                cgAnswers.getChildAt(i).setEnabled(false);
+
+        }
+
+        initialLoadDone = true; // Mark that the initial loading attempt (successful or not) is complete
+        currentQuestionIndex = 0; // Reset question index for the new game/set of questions
+
+        // After processing, try to load the first question if the list isn't empty
+        if (!questionList.isEmpty()) {
+            Log.d(TAG, "Loading first question...");
+            loadNextQuestion();
+        } else {
+            Log.w(TAG, "Question list is empty after processing. No game can be started.");
+            // Update UI to reflect that no questions are available for the game
+            tvQuestion.setText("OOPS.. No Questions found!");
+            bSubmit.setEnabled(false);
+            for(int i=0; i < cgAnswers.getChildCount(); i++)
+                cgAnswers.getChildAt(i).setEnabled(false);
+        }
     }
-    */
+
 
 }

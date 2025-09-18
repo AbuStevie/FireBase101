@@ -1,0 +1,31 @@
+{
+  "Questions": {
+    "testQ1": {
+      "ansCorrect": "Sir Lancelot of Camelot",
+      "ansWrong1": "Leo Messi of Miami",
+      "ansWrong2": "Deni Avdija of Prtland",
+      "ansWrong3": "Sir Bob of the Wailers",
+      "id": "testQ1",
+      "level": 0,
+      "queText": "What is your name?"
+    },
+    "testQ2": {
+      "ansCorrect": "To seek the Holy Grail",
+      "ansWrong1": "To fart in your general direction",
+      "ansWrong2": "To burn the witch",
+      "ansWrong3": "To bring the Holy Hand Granade",
+      "id": "testQ2",
+      "level": 0,
+      "queText": "What is your quest?"
+    },
+    "testQ3": {
+      "ansCorrect": "Blue",
+      "ansWrong1": "Yellow",
+      "ansWrong2": "Blue. No, Yellow !",
+      "ansWrong3": "African or European?",
+      "id": "testQ3",
+      "level": 0,
+      "queText": "What is your Favorite Color?"
+    }
+  }
+}
