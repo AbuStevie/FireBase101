@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:padding="25dp"
     android:layoutDirection="rtl"
-    tools:context=".MainActivity">
+    tools:context=".GameActivity">
 
     <TextView
         android:id="@+id/tvBanner"

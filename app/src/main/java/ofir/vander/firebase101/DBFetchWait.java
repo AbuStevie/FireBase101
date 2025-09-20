@@ -1,18 +1,18 @@
 package ofir.vander.firebase101;
 
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,9 +26,9 @@ import java.util.Random;
 import java.util.Collections;
 
 
-public class MainActivity extends AppCompatActivity {
+public class DBFetchWait extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity"; // For logging
+    private static final String TAG = "DBFetchWait"; // For logging
 
     // Firebase references
     private FirebaseDatabase database;
@@ -40,136 +40,32 @@ public class MainActivity extends AppCompatActivity {
     private boolean initialLoadDone = false; // Flag to ensure initial load happens only once
     // private int levelsSuccessfullyFetched = 0; // Counter for successfully fetched levels
 
-    // UI elements
-    ChipGroup cgAnswers;
-    Chip cAns1, cAns2, cAns3, cAns4;
-    TextView tvQuestion;
-    Button bSubmit;
-    ImageView ivCorrect, ivWrong;
-
-    // Game Logic Variables
-    int correctAnswer=0, selectedAnswer=0;
-    int currentQuestionIndex = 0, questionsInGame = 5;
+    int levelsinGame = GameGlobalsSingleton.getInstance().getLevelsInGame();
     String currentCategory = "SolarSystem";
+
+    TextView tvErrors;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_dbfetch_wait);
 
+        // handle animation and UI
         initUI();
 
+        //init DB and question list
         initFirebase();
-
-        // Initialize your list
-        questionList = new ArrayList<>();
+        questionList = GameGlobalsSingleton.getInstance().getQuestionList();
         tempQuestionsHolder = new ArrayList<>();
 
         // fetch questions and populate list
         fetchQuestionsPerLevel();
 
-        bSubmit.setOnClickListener(v -> {
-            // see that any chip is checked
-            if (!cgAnswers.getCheckedChipIds().isEmpty()) {
-                // set selected answer
-                selectedAnswer = chipIdToInt(cgAnswers.getCheckedChipId()) ;
-                // check if correct
-                if ( selectedAnswer == correctAnswer)
-                    flicker(ivCorrect);
-                else
-                    flicker(ivWrong);
-
-                currentQuestionIndex++;
-
-                loadNextQuestion();
-            }
-            else
-                Toast.makeText(this, "Pick one!", Toast.LENGTH_SHORT).show();
-        });
-    }
-
-    private void flicker(ImageView iv) {
-        // temp function - USE vAnimations !
-
-        iv.animate().alpha(1).setDuration(500).withEndAction(() -> {
-            iv.animate().alpha(0).setDuration(500).start();
-        });
-    }
-
-    private int chipIdToInt(int chipId) {
-        if (chipId == R.id.cAns1)
-            return 0;
-        else if (chipId == R.id.cAns2)
-            return 1;
-        else if (chipId == R.id.cAns3)
-            return 2;
-        else if (chipId == R.id.cAns4)
-            return 3;
-        else
-            return -1;
-    }
-
-    private void loadNextQuestion(){
-
-        if(questionList.isEmpty()){
-            Log.e(TAG, "loadNextQuestion called but questionList is empty.");
-            //  "no questions" state
-            tvQuestion.setText("OOPS.. No Questions found!");
-            bSubmit.setEnabled(false);
-            for(int i=0; i < cgAnswers.getChildCount(); i++)
-                cgAnswers.getChildAt(i).setEnabled(false);
-            return;
-        }
-
-        // check what question is now
-        if (currentQuestionIndex < questionsInGame ) {
-            // unchecks all chips
-            cgAnswers.clearCheck();
-            bSubmit.setEnabled(true);
-
-            // retrieve next question
-            Question currentQuestion = questionList.get(currentQuestionIndex);
-            // here scramble answers function
-            List<String> answers = scrambleAnswers(currentQuestion);
-            // set question text and answers
-            tvQuestion.setText(currentQuestion.getQueText());
-            cAns1.setText(answers.get(0));
-            cAns2.setText(answers.get(1));
-            cAns3.setText(answers.get(2));
-            cAns4.setText(answers.get(3));
-
-        }
-        else
-            // here confetti animation
-            Toast.makeText(this, "Game Over!", Toast.LENGTH_LONG).show();
-    }
-
-    private List<String> scrambleAnswers(Question question) {
-        Random random = new Random();
-        correctAnswer= random.nextInt(4);
-
-        List<String> answers = new ArrayList<>();
-        String correct = question.getAnsCorrect();
-        answers.add(question.getAnsWrong1());
-        answers.add(question.getAnsWrong2());
-        answers.add(question.getAnsWrong3());
-
-        Collections.shuffle(answers);
-        answers.add(correctAnswer, correct);
-        return answers;
     }
 
     private void initUI(){
-        cgAnswers = findViewById(R.id.cgAnswers);
-        cAns1 = findViewById(R.id.cAns1);
-        cAns2 = findViewById(R.id.cAns2);
-        cAns3 = findViewById(R.id.cAns3);
-        cAns4 = findViewById(R.id.cAns4);
-        tvQuestion = findViewById(R.id.tvQuestion);
-        bSubmit = findViewById(R.id.bSubmit);
-        bSubmit.setEnabled(false);
-        ivCorrect = findViewById(R.id.ivCorrect);
-        ivWrong = findViewById(R.id.ivWrong);
+        tvErrors = findViewById(R.id.tvErrors);
     }
 
     private void initFirebase(){
@@ -183,13 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchQuestionsPerLevel() {
-        Log.d(TAG, "Attempting to fetch 1 random question per level for " + questionsInGame + " levels from category: " + currentCategory);
-
-        // 1. For recurring games - Reset state variables from any previous game/fetch
-        if (questionList == null) { // Ensure questionList is initialized if not already
-            questionList = new ArrayList<>();
-        }
-        questionList.clear(); // Clear the main list that holds questions for the current game
+        Log.d(TAG, "Attempting to fetch 1 random question per level for " + levelsinGame + " levels from category: " + currentCategory);
 
         if (tempQuestionsHolder == null) { // Ensure temp list is initialized
             tempQuestionsHolder = new ArrayList<>();
@@ -200,13 +90,8 @@ public class MainActivity extends AppCompatActivity {
         initialLoadDone = false;       // Reset the flag indicating if the initial load attempt is complete
         // This is important if you allow re-fetching or new games.
 
-        // 2. (Optional) Update UI to show loading state
-        // Example:
-        tvQuestion.setText("Loading questions...");
-        bSubmit.setEnabled(false);
-        // You might want a ProgressBar to be visible here.
 
-        // 3. Initiate the recursive fetching process starting with level 1
+        // Initiate the recursive fetching process starting with level 1
         if (database == null) {
             Log.e(TAG, "FirebaseDatabase instance is null. Cannot fetch questions. Ensure initFirebase() is called.");
             Toast.makeText(this, "Error initializing database. Cannot load questions.", Toast.LENGTH_LONG).show();
@@ -222,8 +107,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void fetchRandomQuestionForLevel(final int levelToFetch) {
         // 1. Base Case: If we've attempted to fetch beyond the number of desired levels
-        if (levelToFetch > questionsInGame) {
-            Log.d(TAG, "Base case reached: All " + questionsInGame + " levels have been attempted. Processing results...");
+        if (levelToFetch > levelsinGame) {
+            Log.d(TAG, "Base case reached: All " + levelsinGame + " levels have been attempted. Processing results...");
             checkAndStart(); // All levels attempted, now process whatever we gathered
             return; // Stop recursion
         }
@@ -237,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
 
         // 3. Attach a one-time listener to this specific query
         levelSpecificQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+
+            // Success Callback --->
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 List<Question> questionsFoundAtThisLevel = new ArrayList<>();
@@ -271,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                 fetchRandomQuestionForLevel(levelToFetch + 1);
             }
 
+            // Failure Callback --->
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.e(TAG, "Database error fetching Level " + levelToFetch + " in category '" + currentCategory + "': " + databaseError.getMessage());
@@ -284,41 +172,32 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkAndStart() {
         Log.d(TAG, "Processing fetched questions. Temporary holder size: " + tempQuestionsHolder.size() +
-                ", Expected levels: " + questionsInGame);
+                ", Expected levels: " + levelsinGame);
 
         questionList.clear(); // Ensure the main list is empty before populating
 
-        // Check if we successfully got one question for each desired level
-        if (tempQuestionsHolder.size() == questionsInGame) {
-            questionList.addAll(tempQuestionsHolder);
-            Log.i(TAG, "Successfully fetched " + questionList.size() + " questions for the game.");
-            // Optional: Shuffle the questionList if you don't want them in level order
-            // Collections.shuffle(questionList); // Make sure to import java.util.Collections
-        } else {
+        // Check if we successfully got all questions - load the questions to Globla questionList
+        if (tempQuestionsHolder.size() == levelsinGame) {   // check
+            Log.i(TAG, "Successfully fetched " + tempQuestionsHolder.size() + " questions for the game.");
+            questionList.addAll(tempQuestionsHolder);       // load
+                    } else {
             // Not enough questions were collected
-            Log.e(TAG, "Failed to fetch a complete set of questions. Expected " + questionsInGame +
+            Log.e(TAG, "Failed to fetch a complete set of questions. Expected " + levelsinGame +
                     ", but got " + tempQuestionsHolder.size() + ".");
-            tvQuestion.setText("Failed to load questions. Please check connection and try again.");
-            bSubmit.setEnabled(false);
-            for(int i=0; i < cgAnswers.getChildCount(); i++)
-                cgAnswers.getChildAt(i).setEnabled(false);
-
+            tvErrors.setText("Failed to load questions. Please check connection and try again.");
         }
 
         initialLoadDone = true; // Mark that the initial loading attempt (successful or not) is complete
-        currentQuestionIndex = 0; // Reset question index for the new game/set of questions
 
-        // After processing, try to load the first question if the list isn't empty
-        if (!questionList.isEmpty()) {
-            Log.d(TAG, "Loading first question...");
-            loadNextQuestion();
+        // double check the load and start the game
+        if (!questionList.isEmpty()) {                  // double check
+            Log.d(TAG, "Starting GameActivity");   // start the game
+            Intent go2Game = new Intent(this, GameActivity.class);
+            startActivity(go2Game);
         } else {
             Log.w(TAG, "Question list is empty after processing. No game can be started.");
             // Update UI to reflect that no questions are available for the game
-            tvQuestion.setText("OOPS.. No Questions found!");
-            bSubmit.setEnabled(false);
-            for(int i=0; i < cgAnswers.getChildCount(); i++)
-                cgAnswers.getChildAt(i).setEnabled(false);
+            tvErrors.setText("OOPS.. No Questions found!");
         }
     }
 

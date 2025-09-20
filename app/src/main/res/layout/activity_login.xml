@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:id="@+id/main"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:layoutDirection="ltr"
+android:background="@color/white"
+android:padding="30dp"
+tools:context=".Login">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign In"
+        android:textColor="#000000"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.507"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.273" />
+
+    <com.google.android.material.textfield.TextInputLayout
+    android:id="@+id/tilEmailIn"
+    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="32dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginEnd="32dp"
+    android:hint="Email"
+        app:boxStrokeColor="@color/black"
+        app:startIconTint="#737373"
+        app:endIconMode="clear_text"
+    app:startIconDrawable="@drawable/icon_mail_24"
+    app:layout_constraintEnd_toEndOf="@+id/textView"
+    app:layout_constraintStart_toStartOf="@+id/textView"
+    app:layout_constraintTop_toBottomOf="@+id/textView"
+    >
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etEmailIn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress"
+        android:textColorHint="#737373"
+        android:textColor="@color/black"
+        android:maxLength="30" />
+</com.google.android.material.textfield.TextInputLayout>
+
+<com.google.android.material.textfield.TextInputLayout
+    android:id="@+id/tilPasswordIn"
+    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="32dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginEnd="32dp"
+    app:boxStrokeColor="@color/black"
+    app:startIconTint="#737373"
+    android:hint="Password"
+    app:endIconMode="password_toggle"
+    app:startIconDrawable="@drawable/icon_lock_24"
+
+    app:layout_constraintEnd_toEndOf="@+id/tilEmailIn"
+    app:layout_constraintStart_toStartOf="@+id/tilEmailIn"
+    app:layout_constraintTop_toBottomOf="@+id/tilEmailIn"
+    >
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etPasswordIn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:textColor="@color/black"
+        android:maxLength="20" />
+</com.google.android.material.textfield.TextInputLayout>
+
+
+<Button
+    android:id="@+id/bSignIn"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Sign In"
+    app:layout_constraintEnd_toEndOf="@+id/tilPasswordIn"
+    app:layout_constraintStart_toStartOf="@+id/tilPasswordIn"
+    app:layout_constraintTop_toBottomOf="@+id/tilPasswordIn" />
+
+    <TextView
+        android:id="@+id/tvSignUpHere"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Not signed up yet? Sign up here"
+        app:layout_constraintEnd_toEndOf="@+id/bSignIn"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/bSignIn"
+        app:layout_constraintTop_toBottomOf="@+id/bSignIn" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
