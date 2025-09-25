@@ -1,12 +1,30 @@
 package ofir.vander.firebase101;
 
 public class User {
+    private String uid;
     private String userName;
     private int highestScore;
     private int totalGamesPlayed;
     private String permission;
 
+    // a new user is created with default values
+    public User(String uid, String userName) {
+        this.setUid(uid);
+        this.setUserName(userName);
+        this.setHighestScore(0);
+        this.setTotalGamesPlayed(0);
+        this.setPermission("user");
+    }
+
+    // empty constructor for when i fetch a user at login
     public User() {
+    }
+
+    public String getUid() {
+        return uid;
+    }
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getUserName() {

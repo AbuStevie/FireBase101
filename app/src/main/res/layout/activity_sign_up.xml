@@ -27,7 +27,7 @@
         app:layout_constraintVertical_bias="0.139" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilEmailUp"
+        android:id="@+id/tilEmail"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,10 +45,10 @@
         app:helperTextTextColor="#FF7B88"
         app:layout_constraintEnd_toEndOf="@+id/textView2"
         app:layout_constraintStart_toStartOf="@+id/textView2"
-        app:layout_constraintTop_toBottomOf="@+id/tilNameUp">
+        app:layout_constraintTop_toBottomOf="@+id/tilUserName">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etEmailUp"
+            android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
@@ -57,7 +57,7 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilPasswordUp"
+        android:id="@+id/tilPassword"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -73,12 +73,12 @@
         app:startIconDrawable="@drawable/icon_lock_24"
         app:helperText="*Required"
         app:helperTextTextColor="#FF7B88"
-        app:layout_constraintEnd_toEndOf="@+id/tilEmailUp"
-        app:layout_constraintStart_toStartOf="@+id/tilEmailUp"
-        app:layout_constraintTop_toBottomOf="@+id/tilEmailUp">
+        app:layout_constraintEnd_toEndOf="@+id/tilEmail"
+        app:layout_constraintStart_toStartOf="@+id/tilEmail"
+        app:layout_constraintTop_toBottomOf="@+id/tilEmail">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etPasswordUp"
+            android:id="@+id/etPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
@@ -87,14 +87,14 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilNameUp"
+        android:id="@+id/tilUserName"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="32dp"
-        android:hint="Name"
+        android:hint="UserName"
         app:boxStrokeColor="@color/black"
         app:startIconTint="#737373"
         app:counterEnabled="true"
@@ -107,7 +107,7 @@
         app:layout_constraintTop_toBottomOf="@+id/textView2">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etNameUp"
+            android:id="@+id/etUserName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
@@ -120,8 +120,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sign Up"
-        app:layout_constraintEnd_toEndOf="@+id/tilPasswordUp"
-        app:layout_constraintStart_toStartOf="@+id/tilPasswordUp"
-        app:layout_constraintTop_toBottomOf="@+id/tilPasswordUp" />
+        app:layout_constraintEnd_toEndOf="@+id/tilPassword"
+        app:layout_constraintStart_toStartOf="@+id/tilPassword"
+        app:layout_constraintTop_toBottomOf="@+id/tilPassword" />
+
+    <TextView
+        android:id="@+id/tvHiddenRules"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="• Password must be at least 6 characters long\n
+        • Password must contain at least one letter\n
+        • Password must contain at least one digit"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="@+id/tilPassword"
+        app:layout_constraintTop_toBottomOf="@+id/bSignUp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

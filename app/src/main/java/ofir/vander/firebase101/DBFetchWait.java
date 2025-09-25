@@ -40,9 +40,18 @@ public class DBFetchWait extends AppCompatActivity {
     private boolean initialLoadDone = false; // Flag to ensure initial load happens only once
     // private int levelsSuccessfullyFetched = 0; // Counter for successfully fetched levels
 
+    // GameGlobal info
     int levelsinGame = GameGlobalsSingleton.getInstance().getLevelsInGame();
+    // this too should be put as GameGlobal !!
     String currentCategory = "SolarSystem";
+    // user info
+    String userName=GameGlobalsSingleton.getInstance().getCurrentUser().getUserName();
+    String userPermission=GameGlobalsSingleton.getInstance().getCurrentUser().getPermission();
+    int highestScore=GameGlobalsSingleton.getInstance().getCurrentUser().getHighestScore();
+    int totalGamesPlayed=GameGlobalsSingleton.getInstance().getCurrentUser().getTotalGamesPlayed();
 
+    // UI elements
+    TextView tvInfo;
     TextView tvErrors;
 
 
@@ -66,6 +75,12 @@ public class DBFetchWait extends AppCompatActivity {
 
     private void initUI(){
         tvErrors = findViewById(R.id.tvErrors);
+        tvInfo = findViewById(R.id.tvInfo);
+        tvInfo.setText("Welcome Back " + userName +
+                "\nToal of " + totalGamesPlayed + " games played so far" +
+                "\nHighest Score is " + highestScore +
+                "\nwaiting for questions from firebase" +
+                "\ncool anmation for you");
     }
 
     private void initFirebase(){

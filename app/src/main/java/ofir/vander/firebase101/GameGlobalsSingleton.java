@@ -5,6 +5,7 @@ import java.util.List;
 public class GameGlobalsSingleton {
     private List<Question> questionList;
     private final int levelsInGame;
+    private User currentUser;
 
     private GameGlobalsSingleton(){
         questionList= new ArrayList<>();
@@ -13,6 +14,13 @@ public class GameGlobalsSingleton {
 
     private static class SingletonHelper{
         private static final GameGlobalsSingleton INSTANCE = new GameGlobalsSingleton();
+    }
+
+    public User getCurrentUser(){
+        return currentUser;
+    }
+    public void setCurrentUser(User user){
+        currentUser = user;
     }
 
     public static GameGlobalsSingleton getInstance(){
