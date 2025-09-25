@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
@@ -109,7 +110,7 @@ public class SignUp extends AppCompatActivity {
                     Exception e = task.getException();
                     Log.w(TAG, "createUserWithEmail:failure", e);
                     String errorMessage = e.getMessage();
-                    if (e instanceof FirebaseAuthWeakPasswordException) {
+                    if (e instanceof FirebaseAuthInvalidCredentialsException) {
                         // invalid credentials. which credential?
                         Log.e(TAG, "Invalid Credentials: "+errorMessage);
                         if(errorMessage.contains("ERROR_INVALID_EMAIL"))

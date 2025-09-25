@@ -140,20 +140,26 @@ public class GameActivity extends AppCompatActivity {
         } else {
             // Game Over
             // here confetti animation
-            if (correctAnswersCounter > GameGlobalsSingleton.getInstance().getCurrentUser().getHighestScore())
+            if (correctAnswersCounter > GameGlobalsSingleton.getInstance().getCurrentUser().getHighestScore()) {
+                // Toast message
                 Toast.makeText(this, "New High Score of " + correctAnswersCounter + "!", Toast.LENGTH_LONG).show();
+                // set in the GameGlobals user opbject
+                GameGlobalsSingleton.getInstance().getCurrentUser().setHighestScore(correctAnswersCounter);
+            }
             else
                 Toast.makeText(this, "Game Over You got " + correctAnswersCounter + " out of " + questionsInGame + " correct!", Toast.LENGTH_LONG).show();
-            // update user high score and games played in the GameGlobalsSingleton - if you want to repeat another game
-            // we do not have this functionality implemented here
+            // in any case update that a game was played
+            // NEED TO IMPLEMENT A REPEAT GAME BUTTON AND A FINAL ACTIVITY WITH SCORES !!!!!
             GameGlobalsSingleton.getInstance().getCurrentUser().setTotalGamesPlayed(
                     GameGlobalsSingleton.getInstance().getCurrentUser().getTotalGamesPlayed() + 1);
-            GameGlobalsSingleton.getInstance().getCurrentUser().setHighestScore(correctAnswersCounter);
             // we also want to update this info in the Firebase Realtime Database
             Log.d(TAG, "Updating user info in Firebase uid" + GameGlobalsSingleton.getInstance().getCurrentUser().getUid());
+            // this is the Firebase Database Object
             database = FirebaseDatabase.getInstance();
+            // this is the reference to the specific user node in the database
             DatabaseReference userRef = database.getReference("Users").child(GameGlobalsSingleton.getInstance().getCurrentUser().getUid());
-            userRef.child("highestScore").setValue(correctAnswersCounter);
+            // set the up to date values from game globals
+            userRef.child("highestScore").setValue(GameGlobalsSingleton.getInstance().getCurrentUser().getHighestScore());
             userRef.child("totalGamesPlayed").setValue(GameGlobalsSingleton.getInstance().getCurrentUser().getTotalGamesPlayed());
         }
     }
